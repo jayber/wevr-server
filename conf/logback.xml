@@ -1,12 +1,48 @@
 <!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
 <configuration>
 
+  <property name="logroot" value="${LOGDIR:-./logs}"/>
+
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
 
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>${application.home:-.}/logs/application.log</file>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${logroot}/application.log</file>
+    <append>true</append>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>${logroot}/application.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
+
+      <maxHistory>5</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+
+    </rollingPolicy>
     <encoder>
-      <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
+      <pattern>%date [%level] - %message%n%xException</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="CLIENTFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${logroot}/client.log</file>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
+        <expression>return message.contains("Cannot read property 'removeBehavior' of undefined") ||
+          message.contains("TypeError: Cannot read property 'uuid' of null");
+        </expression>
+      </evaluator>
+      <OnMismatch>NEUTRAL</OnMismatch>
+      <OnMatch>DENY</OnMatch>
+    </filter>
+    <append>true</append>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>${logroot}/client.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
+
+      <maxHistory>5</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+
+    </rollingPolicy>
+    <encoder>
+      <pattern>%date [%level] - %message%n%xException</pattern>
     </encoder>
   </appender>
 
@@ -20,12 +56,19 @@
     <appender-ref ref="FILE" />
   </appender>
 
+  <appender name="ASYNCCLIENTFILE" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="CLIENTFILE"/>
+  </appender>
+
   <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT" />
   </appender>
 
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
+  <logger name="client" level="DEBUG" additivity="false">
+    <appender-ref ref="ASYNCCLIENTFILE"/>
+  </logger>
 
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
@@ -34,7 +77,7 @@
   <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" />
 
   <root level="WARN">
-    <!--<appender-ref ref="ASYNCFILE" />-->
+    <appender-ref ref="ASYNCFILE"/>
     <appender-ref ref="ASYNCSTDOUT" />
   </root>
 
