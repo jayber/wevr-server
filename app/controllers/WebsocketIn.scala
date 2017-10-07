@@ -29,6 +29,10 @@ class WebsocketIn(out: ActorRef, roomId: String)(implicit actorSystem: ActorSyst
     }
   private val player = game.flatMap(game => game ? out).mapTo[ActorRef]
 
+  player.foreach { player =>
+    out ! Json.obj("event" -> "wevr.id", "data" -> player.path.name)
+  }
+
   override def receive: Receive = {
     case message: JsValue =>
       Logger.debug(Json.stringify(message))
