@@ -4,6 +4,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
+GET     /health                              controllers.HomeController.index()
 GET     /wevr/:roomId                           controllers.SocketController.ws(roomId)
 
 GET     /log                           controllers.ClientLoggingController.log(user, message)

@@ -1,0 +1,1 @@
+sudo bin/wevr-server -DLOGDIR=/home/ec2-user/logs -Dhttp.port=9000 -J-Xms1G -J-Xmx1G -J-server 2> /dev/null &
