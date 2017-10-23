@@ -72,7 +72,7 @@ class Game(roomId: String) extends Actor {
           if (index == seq.size - 1) 0 else index + 1
         }.getOrElse(0)
         val target = seq(finalIndex)
-        Logger.debug(s"checking connections for: $finalIndex-${target.path.name}")
+        Logger.trace(s"checking connections for: $finalIndex-${target.path.name}")
         target ! CheckConnections(seq.filterNot {
           _ == target
         }.map {
