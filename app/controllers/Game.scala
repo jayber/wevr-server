@@ -24,7 +24,7 @@ object Game {
 
   case class CheckConnections(peers: Seq[String])
 
-  case class InitCheck()
+  case class StartConnectionCheck()
 
   case class PeerPingFailures(failures: Seq[String])
 
@@ -38,7 +38,7 @@ class Game(roomId: String) extends Actor {
 
   implicit val exec = context.dispatcher
   context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping())
-  context.system.scheduler.schedule(Duration.create(1, "minute"), Duration.create(1, "minute"), self, InitCheck())
+  context.system.scheduler.schedule(Duration.create(1, "minute"), Duration.create(1, "minute"), self, StartConnectionCheck())
 
 
   override def receive = {
@@ -64,20 +64,22 @@ class Game(roomId: String) extends Actor {
       context.children.foreach { player =>
         player ! Ping()
       }
-    case InitCheck() =>
-      val seq = context.children.toIndexedSeq
-      val finalIndex = lastConnectionCheck.map { actor =>
-        var index = seq.indexOf(actor)
-        if (index == seq.size - 1) 0 else index + 1
-      }.getOrElse(0)
-      val target = seq(finalIndex)
-      Logger.debug(s"checking connections for: $finalIndex-${target.path.name}")
-      target ! CheckConnections(seq.filterNot {
-        _ == target
-      }.map {
-        _.path.name
-      })
-      lastConnectionCheck = Some(target)
+    case StartConnectionCheck() =>
+      if (context.children.size > 1) {
+        val seq = context.children.toIndexedSeq
+        val finalIndex = lastConnectionCheck.map { actor =>
+          var index = seq.indexOf(actor)
+          if (index == seq.size - 1) 0 else index + 1
+        }.getOrElse(0)
+        val target = seq(finalIndex)
+        Logger.debug(s"checking connections for: $finalIndex-${target.path.name}")
+        target ! CheckConnections(seq.filterNot {
+          _ == target
+        }.map {
+          _.path.name
+        })
+        lastConnectionCheck = Some(target)
+      }
     case leftgame@Leftgame(player) =>
       Logger.debug("a player left the game")
       val departure = Departure(player.path.name)
