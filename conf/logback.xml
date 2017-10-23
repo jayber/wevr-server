@@ -6,11 +6,11 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logroot}/application.log</file>
+    <file>${logroot}/wevr/application.log</file>
     <append>true</append>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>${logroot}/application.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
+      <fileNamePattern>${logroot}/wevr/application.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
 
       <maxHistory>5</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
@@ -22,7 +22,7 @@
   </appender>
 
   <appender name="CLIENTFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${logroot}/client.log</file>
+    <file>${logroot}/wevr/client.log</file>
     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
       <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
         <expression>return message.contains("Cannot read property 'removeBehavior' of undefined") ||
@@ -35,7 +35,7 @@
     <append>true</append>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>${logroot}/client.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
+      <fileNamePattern>${logroot}/wevr/client.%d{yyyy-MM-dd, aux}-%d{yyyy-ww}.log</fileNamePattern>
 
       <maxHistory>5</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>

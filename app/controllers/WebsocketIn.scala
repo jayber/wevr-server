@@ -3,7 +3,7 @@ package controllers
 import akka.actor.{Actor, ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import controllers.Game.{Leftgame, StateUpdate}
+import controllers.Game.{Leftgame, PeerPingFailures, StateUpdate}
 import controllers.WebsocketIn.NegotiationMessage
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
@@ -44,7 +44,11 @@ class WebsocketIn(out: ActorRef, roomId: String)(implicit actorSystem: ActorSyst
         case "wevr.ice-candidate" => tellGameWithPlayer { player => NegotiationMessage(player.path.name, (message \ "data" \ "to").as[String], (message \ "data" \ "payload").as[JsValue], "ice-candidate")
         }
         case "wevr.state" => game.foreach { _ ! StateUpdate((message \ "data" \ "key").as[String],(message \ "data" \ "data").as[JsValue])}
-        case _ =>
+        case "wevr.peer-ping-failure" => game.foreach {
+          _ ! PeerPingFailures((message \ "data").as[Seq[String]])
+        }
+        case msg =>
+          Logger.debug("unknown websocket event: " + msg)
       }
   }
 
