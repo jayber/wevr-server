@@ -30,6 +30,10 @@ object Game {
 
   case class Reconnect()
 
+  case class Count()
+
+  case class CountReply(count: Int, roomId: String)
+
 }
 
 class Game(roomId: String) extends Actor {
@@ -40,8 +44,10 @@ class Game(roomId: String) extends Actor {
   context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping())
   context.system.scheduler.schedule(Duration.create(1, "minute"), Duration.create(1, "minute"), self, StartConnectionCheck())
 
-
   override def receive = {
+    case Count() =>
+      Logger.debug(s"replying to Count(): $roomId")
+      sender() ! CountReply(context.children.size, roomId)
     case PeerPingFailures(failures) => failures.foreach { failure =>
       context.child(failure).foreach {
         _ ! Reconnect()
@@ -91,9 +97,13 @@ class Game(roomId: String) extends Actor {
         self ! PoisonPill
       }
       player ! PoisonPill
+
+      broadcastCount(-1)
+
     case out: ActorRef =>
-      Logger.debug("creating player")
+      Logger.debug("creating player:")
       val player = context.actorOf(Player.props(out))
+      Logger.debug("name = " + player.path.name)
       sender() ! player
 
       context.children.filterNot {
@@ -105,6 +115,14 @@ class Game(roomId: String) extends Actor {
       state.foreach { entry =>
         player ! StateUpdate(entry._1, entry._2)
       }
+
+      broadcastCount()
+
+  }
+
+  private def broadcastCount(adjust: Int = 0) = {
+    val selection = context.system.actorSelection(s"user/count-*")
+    selection ! CountReply(context.children.size + adjust, roomId)
   }
 }
 

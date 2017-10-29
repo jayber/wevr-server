@@ -5,7 +5,9 @@
 
 # An example controller showing a sample home page
 GET     /health                              controllers.HealthController.get()
-GET     /wevr/:roomId                           controllers.SocketController.ws(roomId)
+GET     /wevr/:roomId                           controllers.WevrSocketController.ws(roomId)
+
+GET     /count                          controllers.CountSocketController.ws()
 
 GET     /log                           controllers.ClientLoggingController.log(user, message)
 GET     /error                           controllers.ClientLoggingController.post(user, message, stack)

@@ -12,7 +12,7 @@ import play.api.mvc.{InjectedController, WebSocket}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class SocketController @Inject()(implicit actorSystem: ActorSystem, exec: ExecutionContext, materializer: Materializer) extends InjectedController {
+class WevrSocketController @Inject()(implicit actorSystem: ActorSystem, exec: ExecutionContext, materializer: Materializer) extends InjectedController {
 
   def ws(roomId: String): WebSocket = WebSocket.accept[JsValue, JsValue] { _ =>
     Logger.debug(s"creating websocket, room: $roomId")
