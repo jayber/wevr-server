@@ -2,7 +2,7 @@ package controllers
 
 import akka.actor.{Actor, ActorRef, Props}
 import controllers.Game._
-import controllers.WebsocketIn.NegotiationMessage
+import controllers.WebsocketIn.WebRTCNegotiationMessage
 import play.api.libs.json.Json
 
 object Player {
@@ -13,7 +13,7 @@ class Player(out: ActorRef) extends Actor {
   override def receive = {
     case Ping() => out ! Json.obj("event" -> "wevr.ping")
     case Connect(recipient) => out ! Json.obj("event" -> "wevr.connect", "data" -> recipient)
-    case NegotiationMessage(from, to, payload, messageType) => out ! Json.obj("event" -> s"wevr.$messageType", "data" -> Json.obj("from" -> from, "payload" -> payload))
+    case WebRTCNegotiationMessage(from, to, payload, messageType) => out ! Json.obj("event" -> s"wevr.$messageType", "data" -> Json.obj("from" -> from, "payload" -> payload))
     case Departure(player) => out ! Json.obj("event" -> "wevr.leftgame", "data" -> player)
     case Reconnect() => out ! Json.obj("event" -> "wevr.reconnect")
     case CheckConnections(peers) => out ! Json.obj("event" -> "wevr.check-connections", "data" -> peers)

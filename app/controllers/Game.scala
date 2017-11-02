@@ -2,7 +2,7 @@ package controllers
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import controllers.Game._
-import controllers.WebsocketIn.NegotiationMessage
+import controllers.WebsocketIn.WebRTCNegotiationMessage
 import play.api.Logger
 import play.api.libs.json.JsValue
 
@@ -63,7 +63,7 @@ class Game(roomId: String) extends Actor {
 
     }
     case StateUpdate(key, value) => state += (key -> value)
-    case message@NegotiationMessage(_, to, _, _) => context.child(to).foreach {
+    case message@WebRTCNegotiationMessage(_, to, _, _) => context.child(to).foreach {
       _ ! message
     }
     case Ping() =>
@@ -87,13 +87,13 @@ class Game(roomId: String) extends Actor {
         lastConnectionCheck = Some(target)
       }
     case leftgame@Leftgame(player) =>
-      Logger.debug("a player left the game")
+      Logger.debug(s"player ${player.path.name} left game $roomId")
       val departure = Departure(player.path.name)
       context.children.foreach {
         _ ! departure
       }
       if (context.children.size < 2) {
-        Logger.debug(s"[$roomId] taking the pill")
+        Logger.debug(s"$roomId taking the pill")
         self ! PoisonPill
       }
       player ! PoisonPill
@@ -101,7 +101,7 @@ class Game(roomId: String) extends Actor {
       broadcastCount(-1)
 
     case out: ActorRef =>
-      Logger.debug("creating player:")
+      Logger.debug("creating player...")
       val player = context.actorOf(Player.props(out))
       Logger.debug("name = " + player.path.name)
       sender() ! player
@@ -117,7 +117,6 @@ class Game(roomId: String) extends Actor {
       }
 
       broadcastCount()
-
   }
 
   private def broadcastCount(adjust: Int = 0) = {
