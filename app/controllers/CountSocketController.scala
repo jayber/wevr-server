@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
 import akka.util.Timeout
-import controllers.Game.{Count, CountReply, Ping}
+import controllers.Game.{CountReply, Ping, RequestCount}
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.streams.ActorFlow
@@ -39,7 +39,7 @@ class CountWebsocket(out: ActorRef) extends Actor {
   context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping())
 
   private val games = context.system.actorSelection(s"user/game-*")
-  games ! Count()
+  games ! RequestCount()
 
   override def receive = {
     case Ping() => out ! Json.obj("event" -> "ping")

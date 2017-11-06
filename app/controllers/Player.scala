@@ -12,6 +12,7 @@ object Player {
 class Player(out: ActorRef) extends Actor {
   override def receive = {
     case Ping() => out ! Json.obj("event" -> "wevr.ping")
+    case IceConfig(config) => out ! Json.obj("event" -> "wevr.ice-config", "data" -> config)
     case Connect(recipient) => out ! Json.obj("event" -> "wevr.connect", "data" -> recipient)
     case WebRTCNegotiationMessage(from, to, payload, messageType) => out ! Json.obj("event" -> s"wevr.$messageType", "data" -> Json.obj("from" -> from, "payload" -> payload))
     case Departure(player) => out ! Json.obj("event" -> "wevr.leftgame", "data" -> player)
