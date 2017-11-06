@@ -36,13 +36,13 @@ class CountWebsocket(out: ActorRef) extends Actor {
 
   implicit private val timeout: Timeout = Timeout(5 seconds)
   implicit private val exec: ExecutionContextExecutor = context.dispatcher
-  context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping())
+  context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping)
 
   private val games = context.system.actorSelection(s"user/game-*")
-  games ! RequestCount()
+  games ! RequestCount
 
   override def receive = {
-    case Ping() => out ! Json.obj("event" -> "ping")
+    case Ping => out ! Json.obj("event" -> "ping")
     case CountReply(count, roomId) =>
       Logger.trace(s"count reply: $roomId = $count")
       out ! Json.obj("event" -> "count", "data" -> Json.obj("count" -> count, "roomId" -> roomId))

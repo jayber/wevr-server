@@ -14,7 +14,7 @@ object Game {
 
   case class Connect(peer: String)
 
-  case class Ping()
+  case object Ping
 
   case class Leftgame(player: ActorRef)
 
@@ -24,30 +24,31 @@ object Game {
 
   case class CheckConnections(peers: Seq[String])
 
-  case class StartConnectionCheck()
+  case object StartConnectionCheck
 
   case class PeerPingFailures(failures: Seq[String])
 
-  case class Reconnect()
+  case object Reconnect
 
-  case class RequestCount()
+  case object RequestCount
 
   case class CountReply(count: Int, roomId: String)
 
-  case class IceConfig(config: JsValue)
+  case object IceConfig {
+    val iceConfig = Json.parse(
+      """{
+      "iceServers": [{
+      "urls": [
+      "stun:stun.l.google.com:19302"
+      ]
+      }, {
+        "urls": "turn:ec2-54-74-139-199.eu-west-1.compute.amazonaws.com:3478",
+        "credential": "noone",
+        "username": "none"
+      }]
+      }""")
+  }
 
-  val iceConfig = IceConfig(Json.parse(
-    """{
-    "iceServers": [{
-    "urls": [
-    "stun:stun.l.google.com:19302"
-    ]
-  }, {
-    "urls": "turn:ec2-54-74-139-199.eu-west-1.compute.amazonaws.com:3478",
-    "credential": "noone",
-    "username": "none"
-  }]
-  }"""))
 }
 
 class Game(roomId: String) extends Actor {
@@ -55,11 +56,11 @@ class Game(roomId: String) extends Actor {
   var lastConnectionCheck: Option[ActorRef] = None
 
   implicit val exec = context.dispatcher
-  context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping())
-  context.system.scheduler.schedule(Duration.create(1, "minute"), Duration.create(1, "minute"), self, StartConnectionCheck())
+  context.system.scheduler.schedule(Duration.Zero, Duration.create(30, "second"), self, Ping)
+  context.system.scheduler.schedule(Duration.create(1, "minute"), Duration.create(1, "minute"), self, StartConnectionCheck)
 
   override def receive: PartialFunction[Any, Unit] = {
-    case RequestCount() =>
+    case RequestCount =>
       Logger.debug(s"replying to Count(): $roomId")
       sender() ! CountReply(context.children.size, roomId)
 
@@ -71,12 +72,12 @@ class Game(roomId: String) extends Actor {
       _ ! message
     }
 
-    case Ping() =>
+    case Ping =>
       context.children.foreach { player =>
-        player ! Ping()
+        player ! Ping
       }
 
-    case StartConnectionCheck() =>
+    case StartConnectionCheck =>
       startPeerPing()
 
     case leftgame@Leftgame(player) =>
@@ -107,7 +108,7 @@ class Game(roomId: String) extends Actor {
   private def handlePeerPingFailures(failures: Seq[String]): Unit = {
     failures.foreach { failure =>
       context.child(failure).foreach {
-        _ ! Reconnect()
+        _ ! Reconnect
       }
       val children = context.children.map(_.path.name).to[Seq]
       val missingChildren = failures.diff(children)
@@ -139,7 +140,7 @@ class Game(roomId: String) extends Actor {
     val player = context.actorOf(Player.props(out))
     Logger.debug("name = " + player.path.name)
     sender() ! player
-    player ! iceConfig
+    player ! IceConfig
     context.children.filterNot {
       _ == player
     }.foreach { ref =>
